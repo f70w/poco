@@ -88,7 +88,12 @@ void SessionImpl::open(const std::string& connect)
 	options["auto-reconnect"] = "";
 	options["secure-auth"] = "";
 	options["character-set"] = "utf8";
-
+        options["ssl-ca"] ="";
+        options["ssl-cert"]="";
+        options["ssl-key"]="";
+        options["ssl-capath"]="";
+        options["ssl-cipher"]="";
+        
 	const std::string& connString = connectionString();
 	for (std::string::const_iterator start = connString.begin();;) 
 	{
@@ -140,6 +145,14 @@ void SessionImpl::open(const std::string& connect)
 	if (!options["character-set"].empty())
 		_handle.options(MYSQL_SET_CHARSET_NAME, options["character-set"].c_str());
 
+        
+        if (!options["ssl-ca"].empty() && !options["ssl-cert"].empty() && !options["ssl-key"].empty()) {
+            mysql_ssl_set((MYSQL*)_handle, options["ssl-key"].c_str(),options["ssl-cert"].c_str(), options["ssl-ca"].c_str(),
+                     options["ssl-capath"].empty()? 0 :  options["ssl-capath"].c_str(),
+                     options["ssl-cipher"].empty()? 0 : options["ssl-cipher"].c_str());
+            _handle.options(MYSQL_OPT_SSL_MODE, (unsigned int)SSL_MODE_REQUIRED);
+        }
+        
 	// Real connect
 	_handle.connect(options["host"].c_str(), 
 			options["user"].c_str(), 
